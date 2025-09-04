@@ -1,64 +1,246 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>IDR Formatting Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+    :root { --gap: 12px; }
+    * { box-sizing: border-box; }
     body {
-      font-family: sans-serif;
-      max-width: 600px;
-      margin: 2rem auto;
-      line-height: 1.5;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: #f7f7f8;
+      color: #222;
     }
-    input {
-      padding: 0.5rem;
-      font-size: 1rem;
-      width: 100%;
-      box-sizing: border-box;
+    .container {
+      max-width: 920px; margin: 0 auto;
+      display: grid; gap: var(--gap);
     }
-    .result {
-      margin-top: 1rem;
-      padding: 0.5rem;
-      background: #f5f5f5;
-      border-radius: 4px;
+    h1 { margin: 0 0 8px; font-size: 1.6rem; }
+    p.caption { margin: 0 0 12px; color: #555; }
+    .card {
+      background: white; border: 1px solid #e5e7eb; border-radius: 12px;
+      padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.04);
     }
-    code {
-      background: #eee;
-      padding: 0.2rem 0.4rem;
-      border-radius: 3px;
+    .grid {
+      display: grid; gap: var(--gap);
+      grid-template-columns: 1fr;
     }
+    @media (min-width: 880px) {
+      .grid.two { grid-template-columns: 1.2fr .8fr; }
+      .grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    }
+    label { font-weight: 600; display: inline-block; margin-bottom: 6px; }
+    input[type="text"] {
+      width: 100%; padding: 12px 14px; border: 1px solid #d1d5db;
+      border-radius: 10px; font-size: 16px; background: #fff;
+    }
+    .row { display: grid; gap: var(--gap); grid-template-columns: 1fr 1fr; }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    select, input[type="checkbox"] {
+      padding: 8px; border-radius: 8px; border: 1px solid #d1d5db; background: #fff;
+      font-size: 14px;
+    }
+    .output {
+      background: #0b1220; color: #e5f2ff; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      padding: 12px 14px; border-radius: 10px; white-space: pre-wrap;
+    }
+    .muted { color: #6b7280; }
+    .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+    button {
+      padding: 8px 10px; border-radius: 10px; border: 1px solid #d1d5db; background: #fff;
+      cursor: pointer; font-size: 14px;
+    }
+    button:hover { background: #f3f4f6; }
+    .note { font-size: 13px; color: #555; }
+    .split { display: grid; gap: var(--gap); grid-template-columns: 1fr; }
+    @media (min-width: 880px) { .split { grid-template-columns: 1fr 1fr; } }
+    .kv { display: grid; grid-template-columns: 180px 1fr; gap: 6px 12px; align-items: baseline; }
+    .kv div:nth-child(odd) { color: #94a3b8; font-family: ui-monospace, monospace; }
   </style>
 </head>
 <body>
-  <h1>IDR Formatting Demo</h1>
-  <p>Type a number below and see it formatted as Indonesian Rupiah style:</p>
+  <div class="container">
+    <div>
+      <h1>IDR Formatting Demo</h1>
+      <p class="caption">Type any value to see <code>formatIdr</code> and <code>parseIdr</code> (number & fixed) in action.</p>
+    </div>
 
-  <input id="priceInput" type="text" placeholder="Type e.g. 1050,32 or 1000" />
+    <div class="card grid two">
+      <div>
+        <label for="inp">Input</label>
+        <input id="inp" type="text" placeholder="Try: 1050,32  |  1.500  |  12.34  |  -1500  |  9.223.372.036.854.775.807,99" />
+        <div class="btns" style="margin-top:8px">
+          <button data-sample="1000">1000</button>
+          <button data-sample="1050,32">1050,32</button>
+          <button data-sample="1.500">1.500</button>
+          <button data-sample="12.34">12.34</button>
+          <button data-sample="-1500.5">-1500.5</button>
+          <button data-sample="Rp 1.234,56">Rp 1.234,56</button>
+          <button data-sample="9.223.372.036.854.775.807,99">HUGE</button>
+          <button id="btnClear">Clear</button>
+        </div>
+      </div>
 
-  <div class="result">
-    <strong>Formatted:</strong> <span id="formatted">–</span><br>
-    <strong>Parsed (number):</strong> <span id="parsed">–</span>
+      <div>
+        <label>Options</label>
+        <div class="controls">
+          <span class="muted">decimals:</span>
+          <select id="decimals">
+            <option value="auto" selected>auto (preserve)</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2 (cents)</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:6px;">
+            <input id="padZeros" type="checkbox" />
+            padZeros (auto)
+          </label>
+          <span class="muted">parse mode:</span>
+          <select id="mode">
+            <option value="number" selected>number (JS)</option>
+            <option value="fixed">fixed (BigInt exact)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="card">
+        <label>Formatted (formatIdr)</label>
+        <div id="outFormatted" class="output">–</div>
+        <div class="note">Uses Indonesian rules: thousands <code>.</code>, decimals <code>,</code>. Minus sign preserved.</div>
+      </div>
+
+      <div class="card">
+        <label>Parsed (parseIdr)</label>
+        <div id="outParsed" class="output">–</div>
+        <div class="note">Mode <code>number</code> uses JS <code>Number</code> (IEEE-754). Mode <code>fixed</code> is exact (BigInt-based).</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <label>Fixed details</label>
+      <div class="kv" id="fixedKv">
+        <div>sign</div><div class="muted">–</div>
+        <div>units (bigint)</div><div class="muted">–</div>
+        <div>scale</div><div class="muted">–</div>
+        <div>toString()</div><div class="muted">–</div>
+        <div>toNumber()</div><div class="muted">–</div>
+      </div>
+      <div class="note" style="margin-top:8px">
+        <strong>Tip:</strong> Use <code>fixed</code> for financial-grade exactness (no floating errors). Render with <code>formatIdr(fixed)</code>.
+      </div>
+    </div>
+
+    <div class="card">
+      <label>Notes</label>
+      <ul class="note">
+        <li>Comma present → treated as decimal marker. Dots become thousands or are ignored.</li>
+        <li>Dots without comma → if pattern like <code>1.500</code> or <code>12.345.678</code>, they’re thousands; otherwise first dot is decimal.</li>
+        <li>Use <em>decimals</em> option to force fixed digits (e.g., 2 for cents) and <em>padZeros</em> to pad in auto mode.</li>
+      </ul>
+    </div>
   </div>
 
-  <!-- Load idr-formatting package from jsDelivr -->
+  <!-- Load idr-formatting from jsDelivr (pin your exact version if you like) -->
   <script type="module">
-    import { formatIdr, parseIdr } from "https://cdn.jsdelivr.net/npm/idr-formatting@1.0.3/dist/index.mjs"
+    import { formatIdr, parseIdr } from "https://cdn.jsdelivr.net/npm/idr-formatting@1.0.5/dist/index.mjs"
 
-    const input = document.getElementById("priceInput")
-    const formatted = document.getElementById("formatted")
-    const parsed = document.getElementById("parsed")
+    const $ = (sel) => document.querySelector(sel)
+    const inp = $("#inp")
+    const decimalsSel = $("#decimals")
+    const padZerosChk = $("#padZeros")
+    const modeSel = $("#mode")
+    const outFormatted = $("#outFormatted")
+    const outParsed = $("#outParsed")
+    const fixedKv = $("#fixedKv")
 
-    function update() {
-      const value = input.value
-      const f = formatIdr(value)
-      const p = parseIdr(f)
-
-      formatted.textContent = f || "–"
-      parsed.textContent = p !== null ? p : "–"
+    function getOptions() {
+      const d = decimalsSel.value
+      return {
+        decimals: d === "auto" ? "auto" : Number(d),
+        padZeros: padZerosChk.checked
+      }
     }
 
-    input.addEventListener("input", update)
-    input.addEventListener("blur", update)
+    function setFixedKv(fx) {
+      const cells = fixedKv.querySelectorAll("div:nth-child(even)")
+      const set = (idx, val) => cells[idx].textContent = val
+      if (!fx) {
+        set(0, "–"); set(1, "–"); set(2, "–"); set(3, "–"); set(4, "–")
+        return
+      }
+      set(0, String(fx.sign))
+      set(1, fx.units.toString() + "n")
+      set(2, String(fx.scale))
+      set(3, fx.toString())
+      set(4, String(fx.toNumber()))
+    }
+
+    function update() {
+      const raw = inp.value
+      const opts = getOptions()
+
+      // Live formatting (keep caret simple: move to end)
+      const formatted = formatIdr(raw, opts)
+      outFormatted.textContent = formatted || "–"
+
+      // Parse according to mode
+      const mode = modeSel.value
+      if (mode === "fixed") {
+        const fx = parseIdr(formatted, { mode: "fixed" })
+        if (fx) {
+          outParsed.textContent = JSON.stringify({
+            sign: fx.sign, units: fx.units.toString() + "n", scale: fx.scale
+          }, null, 2)
+          setFixedKv(fx)
+        } else {
+          outParsed.textContent = "null"
+          setFixedKv(null)
+        }
+      } else {
+        const num = parseIdr(formatted) // number | null
+        outParsed.textContent = (num ?? "null")
+        setFixedKv(null)
+      }
+    }
+
+    // Input behavior: format as you type
+    inp.addEventListener("input", () => {
+      const beforeLen = inp.value.length
+      update()
+      // simple caret: jump to end to avoid complex cursor math
+      inp.setSelectionRange(inp.value.length, inp.value.length)
+    })
+    inp.addEventListener("blur", update)
+
+    // Controls
+    decimalsSel.addEventListener("change", update)
+    padZerosChk.addEventListener("change", update)
+    modeSel.addEventListener("change", update)
+
+    // Samples
+    document.querySelectorAll("button[data-sample]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        inp.value = btn.getAttribute("data-sample")
+        update()
+      })
+    })
+    $("#btnClear").addEventListener("click", () => {
+      inp.value = ""
+      update()
+      inp.focus()
+    })
+
+    // Initial
+    update()
   </script>
 </body>
 </html>
