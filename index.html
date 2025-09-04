@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IDR Formatting Demo</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 2rem auto;
+      line-height: 1.5;
+    }
+    input {
+      padding: 0.5rem;
+      font-size: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .result {
+      margin-top: 1rem;
+      padding: 0.5rem;
+      background: #f5f5f5;
+      border-radius: 4px;
+    }
+    code {
+      background: #eee;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <h1>IDR Formatting Demo</h1>
+  <p>Type a number below and see it formatted as Indonesian Rupiah style:</p>
+
+  <input id="priceInput" type="text" placeholder="Type e.g. 1050,32 or 1000" />
+
+  <div class="result">
+    <strong>Formatted:</strong> <span id="formatted">–</span><br>
+    <strong>Parsed (number):</strong> <span id="parsed">–</span>
+  </div>
+
+  <!-- Load idr-formatting package from jsDelivr -->
+  <script type="module">
+    import { formatIdr, parseIdr } from "https://cdn.jsdelivr.net/npm/idr-formatting@1.0.3/dist/index.mjs"
+
+    const input = document.getElementById("priceInput")
+    const formatted = document.getElementById("formatted")
+    const parsed = document.getElementById("parsed")
+
+    function update() {
+      const value = input.value
+      const f = formatIdr(value)
+      const p = parseIdr(f)
+
+      formatted.textContent = f || "–"
+      parsed.textContent = p !== null ? p : "–"
+    }
+
+    input.addEventListener("input", update)
+    input.addEventListener("blur", update)
+  </script>
+</body>
+</html>
